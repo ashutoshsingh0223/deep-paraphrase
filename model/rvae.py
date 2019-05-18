@@ -33,6 +33,7 @@ class RVAE(nn.Module):
     def forward(self, drop_prob,
                 original_encoder_word_input=None, original_encoder_character_input=None,
                 paraphrse_encoder_word_input=None, paraphrse_encoder_character_input=None,
+                decoder_word_input=None, decoder_character_input=None,
                 z=None, initial_state=None):
         """
 
@@ -42,6 +43,8 @@ class RVAE(nn.Module):
             original_encoder_character_input:
             paraphrse_encoder_word_input:
             paraphrse_encoder_character_input:
+            decoder_word_input:
+            decoder_character_input:
             z: context if sampling is performing
             initial_state: initial state of decoder rnn in order to perform sampling
 
@@ -94,7 +97,8 @@ class RVAE(nn.Module):
             kld = None
         if initial_state is None:
             initial_state = original_encoder_hidden
-        out, final_state = self.decoder(paraphrse_encoder_input, z, drop_prob, initial_state)
+        decoder_input = self.embedding.word_embed(decoder_word_input)
+        out, final_state = self.decoder(decoder_input, z, drop_prob, initial_state)
 
         return out, final_state, kld
 
@@ -106,16 +110,20 @@ class RVAE(nn.Module):
     def trainer(self, optimizer, batch_loader):
         def train(i, batch_size, use_cuda, dropout):
             input = batch_loader.next_batch(batch_size, 'train')
-            input = [Variable(torch.from_numpy(var)) for var in input]
+            for i,inp in enumerate(input):
+                if type(inp[0]) is list:
+                    print(i)
+            input = [Variable(torch.from_numpy(var.astype(np.float))) for var in input]
             input = [var.long() for var in input]
             input = [var.cuda() if use_cuda else var for var in input]
 
-            [original_encoder_word_input, original_encoder_character_input,
-                paraphrse_encoder_word_input, paraphrse_encoder_character_input, target] = input
+            [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
+             paraphrse_encoder_character_input, decoder_word_input, decoder_character_input, target] = input
 
             logits, _, kld = self(dropout,
                                   original_encoder_word_input, original_encoder_character_input,
                                   paraphrse_encoder_word_input, paraphrse_encoder_character_input,
+                                  decoder_word_input, decoder_character_input,
                                   z=None)
 
             logits = logits.view(-1, self.params.word_vocab_size)
@@ -139,12 +147,13 @@ class RVAE(nn.Module):
             input = [var.long() for var in input]
             input = [var.cuda() if use_cuda else var for var in input]
 
-            [original_encoder_word_input, original_encoder_character_input,
-                paraphrse_encoder_word_input, paraphrse_encoder_character_input, target] = input
+            [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
+             paraphrse_encoder_character_input, decoder_word_input, decoder_character_input, target] = input
 
             logits, _, kld = self(0.,
                                   original_encoder_word_input, original_encoder_character_input,
                                   paraphrse_encoder_word_input, paraphrse_encoder_character_input,
+                                  decoder_word_input, decoder_character_input,
                                   z=None)
 
             logits = logits.view(-1, self.params.word_vocab_size)
@@ -175,6 +184,7 @@ class RVAE(nn.Module):
 
         for i in range(seq_len):
             logits, initial_state, _ = self(0., None, None,
+                                            None, None,
                                             decoder_word_input, decoder_character_input,
                                             seed, initial_state)
 

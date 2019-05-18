@@ -16,7 +16,7 @@ class BatchLoader:
 
                 data_files - array containing paths to data sources
 
-                idx_files - array of paths to vocabulury files
+                idx_files - array of paths to vocabulary files
 
                 tensor_files - matrix with shape of [2, target_num] containing paths to files
                     with data represented as tensors
@@ -175,7 +175,7 @@ class BatchLoader:
     def preprocess(self, data_files, idx_files, tensor_files):
 
         data = [open(file, "r").read() for file in data_files]
-        merged_data = data[0] + '\n' + data[1] + '\n' + data[2]
+        merged_data = data[0] + '\n' + data[1] + '\n' + data[2] + '\n' + data[3]
 
         self.chars_vocab_size, self.idx_to_char, self.char_to_idx = self.build_character_vocab(merged_data)
 
