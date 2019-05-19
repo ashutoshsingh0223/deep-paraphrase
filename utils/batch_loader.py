@@ -82,9 +82,15 @@ class BatchLoader:
                           path + 'data/characters_vocab.pkl']
 
         self.tensor_files = [[path + 'data/train_word_tensor.npy',
-                              path + 'data/valid_word_tensor.npy'],
+                              path + 'data/valid_word_tensor.npy',
+                              path + 'data/para_train_word_tensor.npy',
+                              path + 'data/para_valid_word_tensor.npy'],
+
                              [path + 'data/train_character_tensor.npy',
-                              path + 'data/valid_character_tensor.npy']]
+                              path + 'data/valid_character_tensor.npy',
+                              path + 'data/para_train_character_tensor.npy',
+                              path + 'data/para_valid_character_tensor.npy'
+                              ]]
 
         self.blind_symbol = ''
         self.pad_token = '_'
@@ -231,14 +237,14 @@ class BatchLoader:
         target = 0 if target_str == 'train' else 2
 
         indexes = np.array(np.random.randint(self.num_lines[target], size=batch_size))
-
         original_encoder_word_input = [self.word_tensor[target][index] for index in indexes]
         original_encoder_character_input = [self.character_tensor[target][index] for index in indexes]
         input_seq_len = [len(line) for line in original_encoder_word_input]
         ref_max_input_seq_len = np.amax(input_seq_len)
 
-        paraphrse_encoder_word_input = [self.word_tensor[target+1][index] for index in indexes]
-        paraphrse_encoder_character_input = [self.character_tensor[target+1][index] for index in indexes]
+        indexes_para = np.array(np.random.randint(self.num_lines[target+1], size=batch_size))
+        paraphrse_encoder_word_input = [self.word_tensor[target+1][index] for index in indexes_para]
+        paraphrse_encoder_character_input = [self.character_tensor[target+1][index] for index in indexes_para]
         para_input_seq_len = [len(line) for line in paraphrse_encoder_word_input]
         para_max_input_seq_len = np.amax(input_seq_len)
 

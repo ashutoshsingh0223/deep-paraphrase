@@ -55,8 +55,8 @@ class RVAE(nn.Module):
 
         """
 
-        assert parameters_allocation_check(self), \
-            'Invalid CUDA options. Parameters should be allocated in the same memory'
+        # assert parameters_allocation_check(self), \
+        #     'Invalid CUDA options. Parameters should be allocated in the same memory'
         use_cuda = self.embedding.word_embed.weight.is_cuda
 
         assert z is None and fold(lambda acc, parameter: acc and parameter is not None,
