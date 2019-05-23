@@ -11,9 +11,8 @@ from selfModules.embedding import Embedding
 
 from utils.functional import kld_coef, parameters_allocation_check, fold
 
-zero_initialize = None
 
-
+global_encoder_hidden_state = None
 class RVAE(nn.Module):
     def __init__(self, params):
         super(RVAE, self).__init__()
@@ -63,21 +62,19 @@ class RVAE(nn.Module):
                                   [original_encoder_word_input, original_encoder_character_input,
                                    paraphrse_encoder_word_input],
                                   True) \
-            or (z is not None and paraphrse_encoder_word_input is not None), \
+            or (z is not None and decoder_word_input is not None), \
             "Invalid input. If z is None then encoder and decoder inputs should be passed as arguments"
 
-        [batch_size, _] = original_encoder_word_input.size()
+        if original_encoder_word_input is not None:
+            [batch_size, _] = original_encoder_word_input.size()
 
-        original_encoder_input = self.embedding(original_encoder_word_input, original_encoder_character_input)
-        paraphrse_encoder_input = self.embedding(paraphrse_encoder_word_input, paraphrse_encoder_character_input)
+            original_encoder_input = self.embedding(original_encoder_word_input, original_encoder_character_input)
+            paraphrse_encoder_input = self.embedding(paraphrse_encoder_word_input, paraphrse_encoder_character_input)
 
-        global zero_initialize
-        if not zero_initialize:
-            original_encoder_hidden = self.original_encoder.init_hidden(batch_size)
-            zero_initialize = True
-
-        original_encoder_hidden = self.original_encoder(original_encoder_input, original_encoder_hidden)
-        context = self.paraphrase_encoder(paraphrse_encoder_input, original_encoder_hidden)
+            original_encoder_hidden = self.original_encoder(original_encoder_input)
+            global global_encoder_hidden_state
+            global_encoder_hidden_state = original_encoder_hidden
+            context = self.paraphrase_encoder(paraphrse_encoder_input, original_encoder_hidden)
 
         if z is None:
             ''' Get context from encoder and sample z ~ N(mu, std)
@@ -107,12 +104,8 @@ class RVAE(nn.Module):
         # word_embedding is constant parameter thus it must be dropped from list of parameters for optimizer
         return [p for p in self.parameters() if p.requires_grad]
 
-    def trainer(self, optimizer, batch_loader):
-        def train(i, batch_size, use_cuda, dropout):
-            input = batch_loader.next_batch(batch_size, 'train')
-            for i,inp in enumerate(input):
-                if type(inp[0]) is list:
-                    print(i)
+    def trainer(self, optimizer):
+        def train(i, input, use_cuda, dropout):
             input = [Variable(torch.from_numpy(var.astype(np.float))) for var in input]
             input = [var.long() for var in input]
             input = [var.cuda() if use_cuda else var for var in input]
@@ -124,7 +117,7 @@ class RVAE(nn.Module):
                                   original_encoder_word_input, original_encoder_character_input,
                                   paraphrse_encoder_word_input, paraphrse_encoder_character_input,
                                   decoder_word_input, decoder_character_input,
-                                  z=None)
+                                  z=None, initial_state=None)
 
             logits = logits.view(-1, self.params.word_vocab_size)
             target = target.view(-1)
@@ -140,9 +133,8 @@ class RVAE(nn.Module):
 
         return train
 
-    def validater(self, batch_loader):
-        def validate(batch_size, use_cuda):
-            input = batch_loader.next_batch(batch_size, 'valid')
+    def validater(self):
+        def validate(input, use_cuda):
             input = [Variable(torch.from_numpy(var)) for var in input]
             input = [var.long() for var in input]
             input = [var.cuda() if use_cuda else var for var in input]
@@ -154,7 +146,7 @@ class RVAE(nn.Module):
                                   original_encoder_word_input, original_encoder_character_input,
                                   paraphrse_encoder_word_input, paraphrse_encoder_character_input,
                                   decoder_word_input, decoder_character_input,
-                                  z=None)
+                                  z=None, initial_state=None)
 
             logits = logits.view(-1, self.params.word_vocab_size)
             target = target.view(-1)
@@ -165,10 +157,18 @@ class RVAE(nn.Module):
 
         return validate
 
-    def sample(self, batch_loader, seq_len, seed, use_cuda):
+    def predict(self, batch_loader, seq_len, seed, use_cuda):
         seed = Variable(torch.from_numpy(seed).float())
         if use_cuda:
             seed = seed.cuda()
+
+        input = batch_loader.next_batch(2, 'valid')
+        input = [Variable(torch.from_numpy(var)) for var in input]
+        input = [var.long() for var in input]
+        input = [var.cuda() if use_cuda else var for var in input]
+
+        [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
+         paraphrse_encoder_character_input, _, _, _] = input
 
         decoder_word_input_np, decoder_character_input_np = batch_loader.go_input(1)
 
@@ -183,10 +183,10 @@ class RVAE(nn.Module):
         initial_state = None
 
         for i in range(seq_len):
-            logits, initial_state, _ = self(0., None, None,
-                                            None, None,
+            logits, initial_state, _ = self(0., original_encoder_word_input, original_encoder_character_input,
+                                            paraphrse_encoder_word_input, paraphrse_encoder_character_input,
                                             decoder_word_input, decoder_character_input,
-                                            seed, initial_state)
+                                            z=None, initial_state=initial_state)
 
             logits = logits.view(-1, self.params.word_vocab_size)
             prediction = F.softmax(logits)

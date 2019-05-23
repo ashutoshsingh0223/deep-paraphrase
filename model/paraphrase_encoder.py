@@ -27,7 +27,7 @@ class ParaEncoder(nn.Module):
         if not self.bidirectional:
             self.mul_factor = 1
 
-    def forward(self, input):
+    def forward(self, input, original_encoder_hidden=None):
         """
         :param input: [batch_size, seq_len, embed_size] tensor
         :return: context of input sentences with shape of [batch_size, latent_variable_size]
@@ -39,12 +39,12 @@ class ParaEncoder(nn.Module):
         input = self.hw1(input)
         input = input.view(batch_size, seq_len, embed_size)
 
-        assert parameters_allocation_check(self), \
-            'Invalid CUDA options. Parameters should be allocated in the same memory'
-
-        ''' Unfold rnn with zero initial state and get its final state from the last layer
-        '''
-        _, (_, final_state) = self.rnn(input)
+        # assert parameters_allocation_check(self), \
+        #     'Invalid CUDA options. Parameters should be allocated in the same memory'
+        #
+        # ''' Unfold rnn with zero initial state and get its final state from the last layer
+        # '''
+        _, (_, final_state) = self.rnn(input, original_encoder_hidden)
 
         final_state = final_state.view(self.params.encoder_num_layers, 2, batch_size, self.params.encoder_rnn_size)
         final_state = final_state[-1]

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from selfModules.highway import Highway
-from utils.functional import parameters_allocation_check
+# from utils.functional import parameters_allocation_check
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -25,7 +25,7 @@ class OriginalEncoder(nn.Module):
         if not self.bidirectional:
             self.mul_factor = 1
 
-    def forward(self, input):
+    def forward(self, input, original_encoder_hidden=None):
         """
         :param input: [batch_size, seq_len, embed_size] tensor
         :return: context of input sentences with shape of [batch_size, latent_variable_size]
@@ -37,12 +37,12 @@ class OriginalEncoder(nn.Module):
         input = self.hw1(input)
         input = input.view(batch_size, seq_len, embed_size)
 
-        assert parameters_allocation_check(self), \
-            'Invalid CUDA options. Parameters should be allocated in the same memory'
-
-        ''' Unfold rnn with zero initial state and get its final state from the last layer
-        '''
-        out, final_state = self.rnn(input)
+        # assert parameters_allocation_check(self), \
+        #     'Invalid CUDA options. Parameters should be allocated in the same memory'
+        #
+        # ''' Unfold rnn with zero initial state and get its final state from the last layer
+        # '''
+        out, final_state = self.rnn(input, original_encoder_hidden)
 
         return final_state
 
