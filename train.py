@@ -94,21 +94,53 @@ if __name__ == "__main__":
     validation_data = batch_loader.training_data('valid')
 
     for iteration in range(args.num_iterations):
-        [original_encoder_word_input_batches, original_encoder_character_input_batches,
-         paraphrse_encoder_word_input_batches, paraphrse_encoder_character_input_batches,
-         decoder_word_input_batches, decoder_character_input_batches, target_batches] = create_batches(training_data)
+        # [original_encoder_word_input_batches, original_encoder_character_input_batches,
+        #  paraphrse_encoder_word_input_batches, paraphrse_encoder_character_input_batches,
+        #  decoder_word_input_batches, decoder_character_input_batches, target_batches] = create_batches(training_data)
+        #
+        # [val_original_encoder_word_input_batches, val_original_encoder_character_input_batches,
+        #  val_paraphrse_encoder_word_input_batches, val_paraphrse_encoder_character_input_batches,
+        #  val_decoder_word_input_batches, val_decoder_character_input_batches, val_target_batches] = create_batches(
+        #     validation_data)
+        x = 0
+        while True:
+            input = batch_loader.next_batch(x, args.batch_size, "train")
+            if input is None:
+                break
+            # input = [original_encoder_word_input_batches[batch_no],
+            # original_encoder_character_input_batches[batch_no],
+            #          paraphrse_encoder_word_input_batches[batch_no],
+            #          paraphrse_encoder_character_input_batches[batch_no], decoder_word_input_batches[batch_no],
+            #          decoder_character_input_batches[batch_no], target_batches[batch_no]]
 
-        [val_original_encoder_word_input_batches, val_original_encoder_character_input_batches,
-         val_paraphrse_encoder_word_input_batches, val_paraphrse_encoder_character_input_batches,
-         val_decoder_word_input_batches, val_decoder_character_input_batches, val_target_batches] = create_batches(
-            validation_data)
+            cross_entropy, kld, coef = train_step(iteration, input, args.use_cuda, args.dropout)
 
-        for batch_no in range(len(original_encoder_word_input_batches)):
+            if iteration % 2 == 0:
+                print('\n')
+                print('------------TRAIN-------------')
+                print('----------ITERATION-----------')
+                print(iteration)
+                print('--------CROSS-ENTROPY---------')
+                print(cross_entropy.data.cpu().numpy()[0])
+                print('-------------KLD--------------')
+                print(kld.data.cpu().numpy()[0])
+                print('-----------KLD-coef-----------')
+                print(coef)
+                print('------------------------------')
+            x += args.batch_size
 
-            input = [original_encoder_word_input_batches[batch_no], original_encoder_character_input_batches[batch_no],
-                     paraphrse_encoder_word_input_batches[batch_no],
-                     paraphrse_encoder_character_input_batches[batch_no], decoder_word_input_batches[batch_no],
-                     decoder_character_input_batches[batch_no], target_batches[batch_no]]
+        y = 0
+        while True:
+            input = batch_loader.next_batch(y, args.batch_size, "valid")
+            if input is None:
+                break
+        # for batch_no in range(len(val_original_encoder_word_input_batches)):
+        #     input = [val_original_encoder_word_input_batches[batch_no],
+        #              val_original_encoder_character_input_batches[batch_no],
+        #              val_paraphrse_encoder_word_input_batches[batch_no],
+        #              val_paraphrse_encoder_character_input_batches[batch_no],
+        #              val_decoder_word_input_batches[batch_no],
+        #              val_decoder_character_input_batches[batch_no], val_target_batches[batch_no]]
 
             cross_entropy, kld, coef = train_step(iteration, input, args.use_cuda, args.dropout)
 
@@ -124,35 +156,14 @@ if __name__ == "__main__":
                 print('-----------KLD-coef-----------')
                 print(coef)
                 print('------------------------------')
-
-        for batch_no in range(len(val_original_encoder_word_input_batches)):
-            input = [val_original_encoder_word_input_batches[batch_no],
-                     val_original_encoder_character_input_batches[batch_no],
-                     val_paraphrse_encoder_word_input_batches[batch_no],
-                     val_paraphrse_encoder_character_input_batches[batch_no], val_decoder_word_input_batches[batch_no],
-                     val_decoder_character_input_batches[batch_no], val_target_batches[batch_no]]
-
-            cross_entropy, kld, coef = train_step(iteration, input, args.use_cuda, args.dropout)
-
-            if iteration % 5 == 0:
-                print('\n')
-                print('------------TRAIN-------------')
-                print('----------ITERATION-----------')
-                print(iteration)
-                print('--------CROSS-ENTROPY---------')
-                print(cross_entropy.data.cpu().numpy()[0])
-                print('-------------KLD--------------')
-                print(kld.data.cpu().numpy()[0])
-                print('-----------KLD-coef-----------')
-                print(coef)
-                print('------------------------------')
+            y += args.batch_size
 
         if iteration % 2 == 0:
             seed = np.random.normal(size=[1, parameters.latent_variable_size])
-            input = [val_original_encoder_word_input_batches[batch_no][0:1],
-                     val_original_encoder_character_input_batches[batch_no][0:1],
-                     val_paraphrse_encoder_word_input_batches[batch_no][0:1],
-                     val_paraphrse_encoder_character_input_batches[batch_no][0:1]]
+            # input = [val_original_encoder_word_input_batches[batch_no][0:1],
+            #          val_original_encoder_character_input_batches[batch_no][0:1],
+            #          val_paraphrse_encoder_word_input_batches[batch_no][0:1],
+            #          val_paraphrse_encoder_character_input_batches[batch_no][0:1]]
             sample = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
 
             print('\n')

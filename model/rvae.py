@@ -166,7 +166,7 @@ class RVAE(nn.Module):
         input = [var.cuda() if use_cuda else var for var in input]
 
         [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
-         paraphrse_encoder_character_input] = input
+         paraphrse_encoder_character_input, _, _, _] = input
 
         decoder_word_input_np, decoder_character_input_np = batch_loader.go_input(1)
 
@@ -181,9 +181,9 @@ class RVAE(nn.Module):
         initial_state = None
 
         for i in range(seq_len):
-            logits, initial_state, _ = self(0., original_encoder_word_input, original_encoder_character_input,
-                                            paraphrse_encoder_word_input, paraphrse_encoder_character_input,
-                                            decoder_word_input, decoder_character_input,
+            logits, initial_state, _ = self(0., original_encoder_word_input[0:1], original_encoder_character_input[0:1],
+                                            paraphrse_encoder_word_input[0:1], paraphrse_encoder_character_input[0:1],
+                                            decoder_word_input[0:1], decoder_character_input[0:1],
                                             z=None, initial_state=initial_state)
 
             logits = logits.view(-1, self.params.word_vocab_size)

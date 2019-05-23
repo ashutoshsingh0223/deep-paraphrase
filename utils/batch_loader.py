@@ -233,18 +233,24 @@ class BatchLoader:
 
         self.just_words = [word for line in self.word_tensor[0] for word in line]
 
-    def next_batch(self, batch_size, target_str):
+    def next_batch(self, x, batch_size, target_str):
         target = 0 if target_str == 'train' else 2
-
+        upper_limit = None
+        exit = False
         # indexes = np.array(np.random.randint(self.num_lines[target], size=batch_size))
-        original_encoder_word_input = [self.word_tensor[target][index] for index in range(batch_size)]
-        original_encoder_character_input = [self.character_tensor[target][index] for index in range(batch_size)]
+        if (x+batch_size) > len(self.word_tensor[target]):
+            exit = True
+            upper_limit = len(self.word_tensor[target])
+        else:
+            upper_limit = x+batch_size
+        original_encoder_word_input = [self.word_tensor[target][index] for index in range(x, upper_limit)]
+        original_encoder_character_input = [self.character_tensor[target][index] for index in range(x, upper_limit)]
         input_seq_len = [len(line) for line in original_encoder_word_input]
         ref_max_input_seq_len = np.amax(input_seq_len)
 
         # indexes_para = np.array(np.random.randint(self.num_lines[target+1], size=batch_size))
-        paraphrse_encoder_word_input = [self.word_tensor[target+1][index] for index in range(batch_size)]
-        paraphrse_encoder_character_input = [self.character_tensor[target+1][index] for index in range(batch_size)]
+        paraphrse_encoder_word_input = [self.word_tensor[target+1][index] for index in range(x, upper_limit)]
+        paraphrse_encoder_character_input = [self.character_tensor[target+1][index] for index in range(x, upper_limit)]
         para_input_seq_len = [len(line) for line in paraphrse_encoder_word_input]
         para_max_input_seq_len = np.amax(para_input_seq_len)
 
@@ -292,6 +298,9 @@ class BatchLoader:
             line_len = para_input_seq_len[i]
             to_add = max_input_seq_len - line_len
             paraphrse_encoder_character_input[i] = [self.encode_characters(self.pad_token)] * to_add + line[::-1]
+
+        if exit:
+            return None
 
         return np.array(original_encoder_word_input), np.array(original_encoder_character_input), \
                np.array(paraphrse_encoder_word_input), np.array(paraphrse_encoder_character_input), \
