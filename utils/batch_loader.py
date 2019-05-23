@@ -214,7 +214,7 @@ class BatchLoader:
 
     def load_preprocessed(self, data_files, idx_files, tensor_files):
 
-        data = [open(file, "r", ).read() for file in data_files]
+        data = [open(file, "r", encoding='utf-8').read() for file in data_files]
         data_words = [[line.split() for line in target.split('\n')] for target in data]
         self.max_seq_len = np.amax([len(line) for target in data_words for line in target])
         self.num_lines = [len(target) for target in data_words]
