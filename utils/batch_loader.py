@@ -4,6 +4,7 @@ import re
 
 import numpy as np
 from six.moves import cPickle
+from numpy.random import permutation
 
 from .functional import *
 
@@ -300,77 +301,18 @@ class BatchLoader:
             paraphrse_encoder_character_input[i] = [self.encode_characters(self.pad_token)] * to_add + line[::-1]
 
         if exit:
+            permutation_ = permutation(len(self.word_tensor[target]))
+            self.word_tensor[target] = self.word_tensor[target][permutation_]
+            self.character_tensor[target] = self.character_tensor[target][permutation_]
+            self.word_tensor[target+1] = self.word_tensor[target+1][permutation_]
+            self.character_tensor[target+1] = self.character_tensor[target+1][permutation_]
             return None
 
         return np.array(original_encoder_word_input), np.array(original_encoder_character_input), \
                np.array(paraphrse_encoder_word_input), np.array(paraphrse_encoder_character_input), \
                np.array(decoder_word_input), np.array(decoder_character_input), np.array(decoder_output)
 
-    def training_data(self, target_str):
-        target = 0 if target_str == 'train' else 2
 
-        # indexes = np.array(np.random.randint(self.num_lines[target], size=batch_size))
-        original_encoder_word_input = [self.word_tensor[target][index] for index in range(len(self.word_tensor[target]))]
-        original_encoder_character_input = [self.character_tensor[target][index] for index in range(len(self.character_tensor[target]))]
-        input_seq_len = [len(line) for line in original_encoder_word_input]
-        ref_max_input_seq_len = np.amax(input_seq_len)
-
-        # indexes_para = np.array(np.random.randint(self.num_lines[target+1], size=batch_size))
-        paraphrse_encoder_word_input = [self.word_tensor[target+1][index]
-                                        for index in range(len(self.word_tensor[target+1]))]
-        paraphrse_encoder_character_input = [self.character_tensor[target+1][index]
-                                             for index in range(len(self.character_tensor[target+1]))]
-        para_input_seq_len = [len(line) for line in paraphrse_encoder_word_input]
-        para_max_input_seq_len = np.amax(para_input_seq_len)
-
-        max_input_seq_len = max(ref_max_input_seq_len, para_max_input_seq_len)
-
-        encoded_words = [[idx for idx in line] for line in original_encoder_word_input]
-        decoder_word_input = [[self.word_to_idx[self.go_token]] + line for line in original_encoder_word_input]
-        decoder_character_input = [
-            [self.encode_characters(self.go_token)] + line for line in original_encoder_character_input]
-
-        decoder_output = [line + [self.word_to_idx[self.end_token]] for line in encoded_words]
-
-        # sorry
-        for i, line in enumerate(decoder_word_input):
-            line_len = input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            decoder_word_input[i] = line + [self.word_to_idx[self.pad_token]] * to_add
-
-        for i, line in enumerate(decoder_character_input):
-            line_len = input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            decoder_character_input[i] = line + [self.encode_characters(self.pad_token)] * to_add
-
-        for i, line in enumerate(decoder_output):
-            line_len = input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            decoder_output[i] = line + [self.word_to_idx[self.pad_token]] * to_add
-
-        for i, line in enumerate(original_encoder_word_input):
-            line_len = input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            original_encoder_word_input[i] = [self.word_to_idx[self.pad_token]] * to_add + line[::-1]
-
-        for i, line in enumerate(original_encoder_character_input):
-            line_len = input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            original_encoder_character_input[i] = [self.encode_characters(self.pad_token)] * to_add + line[::-1]
-
-        for i, line in enumerate(paraphrse_encoder_word_input):
-            line_len = para_input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            paraphrse_encoder_word_input[i] = [self.word_to_idx[self.pad_token]] * to_add + line[::-1]
-
-        for i, line in enumerate(paraphrse_encoder_character_input):
-            line_len = para_input_seq_len[i]
-            to_add = max_input_seq_len - line_len
-            paraphrse_encoder_character_input[i] = [self.encode_characters(self.pad_token)] * to_add + line[::-1]
-
-        return np.array(original_encoder_word_input), np.array(original_encoder_character_input), \
-               np.array(paraphrse_encoder_word_input), np.array(paraphrse_encoder_character_input), \
-               np.array(decoder_word_input), np.array(decoder_character_input), np.array(decoder_output)
 
     def next_embedding_seq(self, seq_len):
         """

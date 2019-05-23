@@ -8,7 +8,6 @@ from torch.optim import Adam
 from utils.batch_loader import BatchLoader
 from utils.parameters import Parameters
 from model.rvae import RVAE
-from numpy.random import permutation
 
 
 def create_batches(data):
@@ -90,8 +89,8 @@ if __name__ == "__main__":
 
     ce_result = []
     kld_result = []
-    training_data = batch_loader.training_data('train')
-    validation_data = batch_loader.training_data('valid')
+    # training_data = batch_loader.training_data('train')
+    # validation_data = batch_loader.training_data('valid')
 
     for iteration in range(args.num_iterations):
         # [original_encoder_word_input_batches, original_encoder_character_input_batches,
