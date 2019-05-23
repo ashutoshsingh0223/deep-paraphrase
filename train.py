@@ -147,15 +147,18 @@ if __name__ == "__main__":
                 print(coef)
                 print('------------------------------')
 
-        if iteration % 20 == 0:
+        if iteration % 2 == 0:
             seed = np.random.normal(size=[1, parameters.latent_variable_size])
-
-            sample = rvae.sample(batch_loader, 50, seed, args.use_cuda)
+            input = [val_original_encoder_word_input_batches[batch_no][0:1],
+                     val_original_encoder_character_input_batches[batch_no][0:1],
+                     val_paraphrse_encoder_word_input_batches[batch_no][0:1],
+                     val_paraphrse_encoder_character_input_batches[batch_no][0:1]]
+            sample = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
 
             print('\n')
             print('------------SAMPLE------------')
             print('------------------------------')
-            print(sample)
+            print(sample.encode("utf-8"))
             print('------------------------------')
         print("--------------------saving checkpoint-----------------------")
         t.save(rvae.state_dict(), 'trained_RVAE_checkpoint')

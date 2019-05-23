@@ -157,18 +157,16 @@ class RVAE(nn.Module):
 
         return validate
 
-    def predict(self, batch_loader, seq_len, seed, use_cuda):
+    def predict(self, input, batch_loader, seq_len, seed, use_cuda):
         seed = Variable(torch.from_numpy(seed).float())
         if use_cuda:
             seed = seed.cuda()
-
-        input = batch_loader.next_batch(2, 'valid')
         input = [Variable(torch.from_numpy(var)) for var in input]
         input = [var.long() for var in input]
         input = [var.cuda() if use_cuda else var for var in input]
 
         [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
-         paraphrse_encoder_character_input, _, _, _] = input
+         paraphrse_encoder_character_input] = input
 
         decoder_word_input_np, decoder_character_input_np = batch_loader.go_input(1)
 
