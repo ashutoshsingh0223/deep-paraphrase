@@ -8,6 +8,7 @@ from torch.optim import Adam
 from utils.batch_loader import BatchLoader
 from utils.parameters import Parameters
 from model.rvae import RVAE
+import progressbar
 
 
 def create_batches(data):
@@ -93,9 +94,14 @@ if __name__ == "__main__":
     # validation_data = batch_loader.training_data('valid')
 
     for iteration in range(args.num_iterations):
+        print(f"-----Iteration: {iteration}-------------")
         x = 0
+        bar = progressbar.ProgressBar(maxval=130001,
+                                      widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        bar.start()
         while True:
             input = batch_loader.next_batch(x, args.batch_size, "train")
+            bar.update(x + 1)
             if input is None:
                 break
             cross_entropy, kld, coef = train_step(iteration, input, args.use_cuda, args.dropout)
@@ -111,10 +117,15 @@ if __name__ == "__main__":
                 print(f'reference: {reference.encode("utf-8")}')
                 print(f'generated: {result.encode("utf-8")}')
                 print('------------------------------')
+        bar.finish()
 
         y = 0
+        bar = progressbar.ProgressBar(maxval=19262,
+                                      widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+        bar.start()
         while True:
             input = batch_loader.next_batch(y, args.batch_size, "valid")
+            bar.update(y + 1)
             if input is None:
                 break
             cross_entropy, kld, coef = train_step(iteration, input, args.use_cuda, args.dropout)
@@ -130,6 +141,7 @@ if __name__ == "__main__":
                 print(f'reference: {reference.encode("utf-8")}')
                 print(f'generated: {result.encode("utf-8")}')
                 print('------------------------------')
+        bar.finish()
 
         if iteration % 10 == 0:
             print('\n')
@@ -147,6 +159,8 @@ if __name__ == "__main__":
         print("--------------------saving checkpoint-----------------------")
         t.save(rvae.state_dict(), 'trained_RVAE_checkpoint')
         print("--------------------saved checkpoint-----------------------")
+        print("\n\n\n")
+
 
     t.save(rvae.state_dict(), 'trained_RVAE')
 
