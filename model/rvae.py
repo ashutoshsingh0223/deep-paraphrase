@@ -179,7 +179,10 @@ class RVAE(nn.Module):
         result = ''
 
         initial_state = None
-
+        sentence = " ".join(
+            list(map(lambda x: batch_loader.idx_to_word[x], original_encoder_word_input[0].tolist()))[::-1])
+        reference = " ".join(
+            list(map(lambda x: batch_loader.idx_to_word[x], paraphrse_encoder_word_input[0].tolist()))[::-1])
         for i in range(seq_len):
             logits, initial_state, _ = self(0., original_encoder_word_input[0:1], original_encoder_character_input[0:1],
                                             paraphrse_encoder_word_input[0:1], paraphrse_encoder_character_input[0:1],
@@ -205,4 +208,4 @@ class RVAE(nn.Module):
             if use_cuda:
                 decoder_word_input, decoder_character_input = decoder_word_input.cuda(), decoder_character_input.cuda()
 
-        return result
+        return sentence, reference, result

@@ -102,12 +102,14 @@ if __name__ == "__main__":
             x += args.batch_size
             if x == 64:
                 seed = np.random.normal(size=[1, parameters.latent_variable_size])
-                sample = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
+                sentence, reference, result = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
 
                 print('\n')
                 print('------------SAMPLE------------')
                 print('------------------------------')
-                print(sample.encode("utf-8"))
+                print(f'original: {sentence.encode("utf-8")}')
+                print(f'reference: {reference.encode("utf-8")}')
+                print(f'generated: {result.encode("utf-8")}')
                 print('------------------------------')
 
         y = 0
@@ -119,28 +121,28 @@ if __name__ == "__main__":
             y += args.batch_size
             if y == 64:
                 seed = np.random.normal(size=[1, parameters.latent_variable_size])
-                sample = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
+                sentence, reference, result = rvae.predict(input, batch_loader, 50, seed, args.use_cuda)
 
                 print('\n')
                 print('------------SAMPLE------------')
                 print('------------------------------')
-                print(sample.encode("utf-8"))
+                print(f'original: {sentence.encode("utf-8")}')
+                print(f'reference: {reference.encode("utf-8")}')
+                print(f'generated: {result.encode("utf-8")}')
                 print('------------------------------')
 
-        # if iteration % 10 == 0:
-        #     print('\n')
-        #     print('------------TRAIN-------------')
-        #     print('----------ITERATION-----------')
-        #     print(iteration)
-        #     print('--------CROSS-ENTROPY---------')
-        #     print(cross_entropy.data.cpu().numpy())
-        #     print('-------------KLD--------------')
-        #     print(kld.data.cpu().numpy())
-        #     print('-----------KLD-coef-----------')
-        #     print(coef)
-        #     print('------------------------------')
-
-
+        if iteration % 10 == 0:
+            print('\n')
+            print('------------TRAIN-------------')
+            print('----------ITERATION-----------')
+            print(iteration)
+            print('--------CROSS-ENTROPY---------')
+            print(cross_entropy.data.cpu().numpy())
+            print('-------------KLD--------------')
+            print(kld.data.cpu().numpy())
+            print('-----------KLD-coef-----------')
+            print(coef)
+            print('------------------------------')
 
         print("--------------------saving checkpoint-----------------------")
         t.save(rvae.state_dict(), 'trained_RVAE_checkpoint')
