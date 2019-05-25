@@ -157,10 +157,9 @@ if __name__ == "__main__":
             print('------------------------------')
 
         print("--------------------saving checkpoint-----------------------")
-        t.save(rvae.state_dict(), 'trained_RVAE_checkpoint')
+        t.save(rvae.state_dict(), 'trained_RVAE_checkpoint_para_out')
         print("--------------------saved checkpoint-----------------------")
         print("\n\n\n")
-
 
     t.save(rvae.state_dict(), 'trained_RVAE')
 
