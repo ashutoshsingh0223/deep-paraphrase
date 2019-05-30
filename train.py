@@ -11,41 +11,6 @@ from model.rvae import RVAE
 import progressbar
 
 
-def create_batches(data):
-    num_samples = len(data[0])
-    permutation_ = permutation(num_samples)
-
-    [original_encoder_word_input, original_encoder_character_input, paraphrse_encoder_word_input,
-     paraphrse_encoder_character_input, decoder_word_input, decoder_character_input, target] = data[permutation_]
-
-    original_encoder_word_input_batches = [original_encoder_word_input[x: x + args.batch_size]
-                                           for x in range(0, len(original_encoder_word_input), args.batch_size)]
-
-    original_encoder_character_input_batches = [original_encoder_character_input[x: x + args.batch_size]
-                                                for x in
-                                                range(0, len(original_encoder_character_input), args.batch_size)]
-
-    paraphrse_encoder_word_input_batches = [paraphrse_encoder_word_input[x: x + args.batch_size]
-                                            for x in range(0, len(paraphrse_encoder_word_input), args.batch_size)]
-
-    paraphrse_encoder_character_input_batches = [paraphrse_encoder_character_input[x: x + args.batch_size]
-                                                 for x in
-                                                 range(0, len(paraphrse_encoder_character_input), args.batch_size)]
-
-    decoder_word_input_batches = [decoder_word_input[x: x + args.batch_size]
-                                  for x in range(0, len(decoder_word_input), args.batch_size)]
-
-    decoder_character_input_batches = [decoder_character_input[x: x + args.batch_size]
-                                       for x in range(0, len(decoder_character_input), args.batch_size)]
-
-    target_batches = [target[x: x + args.batch_size]
-                      for x in range(0, len(target), args.batch_size)]
-
-    return original_encoder_word_input_batches, original_encoder_character_input_batches, \
-           paraphrse_encoder_word_input_batches, paraphrse_encoder_character_input_batches, \
-           decoder_word_input_batches, decoder_character_input_batches, target_batches
-
-
 if __name__ == "__main__":
 
     if not os.path.exists('data/word_embeddings.npy'):
